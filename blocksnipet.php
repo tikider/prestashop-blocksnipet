@@ -66,7 +66,7 @@ class BlockSnipet extends Module
 	 		`text` varchar(64) NOT NULL,
 	 		PRIMARY KEY(`id_blocklink`, `id_lang`))
 	 		ENGINE='._MYSQL_ENGINE_.' default CHARSET=utf8') OR
-		 	!Configuration::updateValue('PS_BLOCKLINK_TITLE', array('1' => 'Block link', '2' => 'Bloc lien')))
+		 	!Configuration::updateValue('PS_BLOCKSNIPET_TITLE', array('1' => 'Block link', '2' => 'Bloc lien')))
 	 		return false;
 	 	return true;
 	}
@@ -76,8 +76,8 @@ class BlockSnipet extends Module
 	 	if (!parent::uninstall() OR
 	 		!Db::getInstance()->Execute('DROP TABLE '._DB_PREFIX_.'blocklink') OR
 	 		!Db::getInstance()->Execute('DROP TABLE '._DB_PREFIX_.'blocklink_lang') OR
-	 		!Configuration::deleteByName('PS_BLOCKLINK_TITLE') OR
-	 		!Configuration::deleteByName('PS_BLOCKLINK_URL'))
+	 		!Configuration::deleteByName('PS_BLOCKSNIPET_TITLE') OR
+	 		!Configuration::deleteByName('PS_BLOCKSNIPET_URL'))
 	 		return false;
 	 	return true;
 	}
@@ -89,8 +89,8 @@ class BlockSnipet extends Module
 		
 		$smarty->assign(array(
 			'blocklink_links' => $links,
-			'title' => Configuration::get('PS_BLOCKLINK_TITLE', $cookie->id_lang),
-			'url' => Configuration::get('PS_BLOCKLINK_URL'),
+			'title' => Configuration::get('PS_BLOCKSNIPET_TITLE', $cookie->id_lang),
+			'url' => Configuration::get('PS_BLOCKSNIPET_URL'),
 			'lang' => 'text_'.$cookie->id_lang
 		));
 	 	if (!$links)
@@ -107,7 +107,7 @@ class BlockSnipet extends Module
 	{
 	 	$result = array();
 	 	/* Get id and url */
-	 	if (!$links = Db::getInstance()->ExecuteS('SELECT `id_blocklink`, `url`, `new_window` FROM '._DB_PREFIX_.'blocklink'.((int)(Configuration::get('PS_BLOCKLINK_ORDERWAY')) == 1 ? ' ORDER BY `id_blocklink` DESC' : '')))
+	 	if (!$links = Db::getInstance()->ExecuteS('SELECT `id_blocklink`, `url`, `new_window` FROM '._DB_PREFIX_.'blocklink'.((int)(Configuration::get('PS_BLOCKSNIPET_ORDERWAY')) == 1 ? ' ORDER BY `id_blocklink` DESC' : '')))
 	 		return false;
 	 	$i = 0;
 	 	foreach ($links AS $link)
@@ -182,9 +182,9 @@ class BlockSnipet extends Module
 		$result = array();
 		foreach ($languages AS $language)
 			$result[$language['id_lang']] = $_POST['title_'.$language['id_lang']];
-	 	if (!Configuration::updateValue('PS_BLOCKLINK_TITLE', $result))
+	 	if (!Configuration::updateValue('PS_BLOCKSNIPET_TITLE', $result))
 	 		return false;
-	 	return Configuration::updateValue('PS_BLOCKLINK_URL', $_POST['title_url']);
+	 	return Configuration::updateValue('PS_BLOCKSNIPET_URL', $_POST['title_url']);
 	}
 	
 	public function getContent()
@@ -242,7 +242,7 @@ class BlockSnipet extends Module
      	}
      	if (isset($_POST['submitOrderWay']))
 		{
-			if (Configuration::updateValue('PS_BLOCKLINK_ORDERWAY', (int)(Tools::getValue('orderWay'))))
+			if (Configuration::updateValue('PS_BLOCKSNIPET_ORDERWAY', (int)(Tools::getValue('orderWay'))))
 				$this->_html .= $this->displayConfirmation($this->l('Sort order updated'));
 			else
 				$this->_html .= $this->displayError($this->l('An error occurred during sort order set-up.'));
@@ -262,7 +262,7 @@ class BlockSnipet extends Module
 		$languages = Language::getLanguages(false);
 		$divLangName = 'text¤title';
 		/* Title */
-	 	$title_url = Configuration::get('PS_BLOCKLINK_URL');
+	 	$title_url = Configuration::get('PS_BLOCKSNIPET_URL');
 
 	 	$this->_html .= '
 		<script type="text/javascript">
@@ -301,7 +301,7 @@ class BlockSnipet extends Module
 		foreach ($languages as $language)
 			$this->_html .= '
 					<div id="title_'.$language['id_lang'].'" style="display: '.($language['id_lang'] == $defaultLanguage ? 'block' : 'none').'; float: left;">
-						<input type="text" name="title_'.$language['id_lang'].'" value="'.(($this->error AND isset($_POST['title'])) ? $_POST['title'] : Configuration::get('PS_BLOCKLINK_TITLE', $language['id_lang'])).'" /><sup> *</sup>
+						<input type="text" name="title_'.$language['id_lang'].'" value="'.(($this->error AND isset($_POST['title'])) ? $_POST['title'] : Configuration::get('PS_BLOCKSNIPET_TITLE', $language['id_lang'])).'" /><sup> *</sup>
 					</div>';
 		$this->_html .= $this->displayFlags($languages, $defaultLanguage, $divLangName, 'title', true);
 		$this->_html .= '
@@ -318,8 +318,8 @@ class BlockSnipet extends Module
 				<label>'.$this->l('Order list:').'</label>
 				<div class="margin-form">
 					<select name="orderWay">
-						<option value="0"'.(!Configuration::get('PS_BLOCKLINK_ORDERWAY') ? 'selected="selected"' : '').'>'.$this->l('by most recent links').'</option>
-						<option value="1"'.(Configuration::get('PS_BLOCKLINK_ORDERWAY') ? 'selected="selected"' : '').'>'.$this->l('by oldest links').'</option>
+						<option value="0"'.(!Configuration::get('PS_BLOCKSNIPET_ORDERWAY') ? 'selected="selected"' : '').'>'.$this->l('by most recent links').'</option>
+						<option value="1"'.(Configuration::get('PS_BLOCKSNIPET_ORDERWAY') ? 'selected="selected"' : '').'>'.$this->l('by oldest links').'</option>
 					</select>
 				</div>
 				<div class="margin-form"><input type="submit" class="button" name="submitOrderWay" value="'.$this->l('Update').'" /></div>
