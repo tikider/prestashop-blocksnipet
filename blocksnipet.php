@@ -95,7 +95,7 @@ class BlockSnipet extends Module
 		));
 	 	if (!$links)
 			return false;
-		return $this->display(__FILE__, 'blocklink.tpl');
+		return $this->display(__FILE__, 'blocksnipet.tpl');
 	}
 	
 	public function hookRightColumn($params)
