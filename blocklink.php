@@ -28,23 +28,23 @@
 if (!defined('_CAN_LOAD_FILES_'))
 	exit;
 
-class BlockLink extends Module
+class BlockSnipet extends Module
 {
 	/* @var boolean error */
 	protected $error = false;
 	
 	public function __construct()
 	{
-	 	$this->name = 'blocklink';
+	 	$this->name = 'blocksnipet';
 	 	$this->tab = 'front_office_features';
 	 	$this->version = '1.4';
-		$this->author = 'PrestaShop';
+		$this->author = 'PrestaShop-dmbeti';
 		$this->need_instance = 0;
 
 	 	parent::__construct();
 
-        $this->displayName = $this->l('Link block');
-        $this->description = $this->l('Adds a block with additional links.');
+        $this->displayName = $this->l('snipet block');
+        $this->description = $this->l('Adds a block with additional links and snipets.');
 		$this->confirmUninstall = $this->l('Are you sure you want to delete all your links ?');
 	}
 	
