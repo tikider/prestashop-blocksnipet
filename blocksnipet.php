@@ -53,17 +53,18 @@ class BlockSnipet extends Module
 	 	if (!parent::install() OR
 	 		!$this->registerHook('leftColumn') OR
 	 		!Db::getInstance()->Execute('
-	 		CREATE TABLE '._DB_PREFIX_.'blocklink (
+	 		CREATE TABLE '._DB_PREFIX_.'blocksnipet (
 	 		`id_blocklink` int(2) NOT NULL AUTO_INCREMENT, 
 	 		`url` varchar(255) NOT NULL,
 	 		`new_window` TINYINT(1) NOT NULL,
 	 		PRIMARY KEY(`id_blocklink`))
 	 		ENGINE='._MYSQL_ENGINE_.' default CHARSET=utf8') OR
 	 		!Db::getInstance()->Execute('
-	 		CREATE TABLE '._DB_PREFIX_.'blocklink_lang (
+	 		CREATE TABLE '._DB_PREFIX_.'blocksnipet_lang (
 	 		`id_blocklink` int(2) NOT NULL,
 	 		`id_lang` int(2) NOT NULL,
-	 		`text` varchar(64) NOT NULL,
+            `text` varchar(64) NOT NULL,
+            `snipet` varchar(500) NOT NULL,
 	 		PRIMARY KEY(`id_blocklink`, `id_lang`))
 	 		ENGINE='._MYSQL_ENGINE_.' default CHARSET=utf8') OR
 		 	!Configuration::updateValue('PS_BLOCKSNIPET_TITLE', array('1' => 'Block link', '2' => 'Bloc lien')))
@@ -74,8 +75,8 @@ class BlockSnipet extends Module
 	public function uninstall()
 	{
 	 	if (!parent::uninstall() OR
-	 		!Db::getInstance()->Execute('DROP TABLE '._DB_PREFIX_.'blocklink') OR
-	 		!Db::getInstance()->Execute('DROP TABLE '._DB_PREFIX_.'blocklink_lang') OR
+	 		!Db::getInstance()->Execute('DROP TABLE '._DB_PREFIX_.'blocksnipet') OR
+	 		!Db::getInstance()->Execute('DROP TABLE '._DB_PREFIX_.'blocksnipet_lang') OR
 	 		!Configuration::deleteByName('PS_BLOCKSNIPET_TITLE') OR
 	 		!Configuration::deleteByName('PS_BLOCKSNIPET_URL'))
 	 		return false;
@@ -91,7 +92,8 @@ class BlockSnipet extends Module
 			'blocklink_links' => $links,
 			'title' => Configuration::get('PS_BLOCKSNIPET_TITLE', $cookie->id_lang),
 			'url' => Configuration::get('PS_BLOCKSNIPET_URL'),
-			'lang' => 'text_'.$cookie->id_lang
+			'lang' => 'text_'.$cookie->id_lang,
+                        'snip' => 'snipet_'.$cookie->id_lang
 		));
 	 	if (!$links)
 			return false;
@@ -107,8 +109,8 @@ class BlockSnipet extends Module
 	{
 	 	$result = array();
 	 	/* Get id and url */
-	 	if (!$links = Db::getInstance()->ExecuteS('SELECT `id_blocklink`, `url`, `new_window` FROM '._DB_PREFIX_.'blocklink'.((int)(Configuration::get('PS_BLOCKSNIPET_ORDERWAY')) == 1 ? ' ORDER BY `id_blocklink` DESC' : '')))
-	 		return false;
+	 	if (!$links = Db::getInstance()->ExecuteS('SELECT `id_blocklink`, `url`, `new_window` FROM '._DB_PREFIX_.'blocksnipet'.((int)(Configuration::get('PS_BLOCKSNIPET_ORDERWAY')) == 1 ? ' ORDER BY `id_blocklink` DESC' : ''))) 
+                        return false;
 	 	$i = 0;
 	 	foreach ($links AS $link)
 	 	{
@@ -116,64 +118,69 @@ class BlockSnipet extends Module
 			$result[$i]['url'] = $link['url'];
 			$result[$i]['newWindow'] = $link['new_window'];
 			/* Get multilingual text */
-			if (!$texts = Db::getInstance()->ExecuteS('SELECT `id_lang`, `text` FROM '._DB_PREFIX_.'blocklink_lang WHERE `id_blocklink`='.(int)($link['id_blocklink'])))
-				return false;
+			if (!$texts = Db::getInstance()->ExecuteS('SELECT `id_lang`, `text`, `snipet` FROM '._DB_PREFIX_.'blocksnipet_lang WHERE `id_blocklink`='.(int)($link['id_blocklink'])))
+                                return false;
 			foreach ($texts AS $text)
-				$result[$i]['text_'.$text['id_lang']] = $text['text'];
+                        {
+                $result[$i]['text_'.$text['id_lang']] = $text['text'];
+                $result[$i]['snipet_'.$text['id_lang']] = $text['snipet'];
+                        }
 			$i++;
+                        
 		}
+                
 	 	return $result;
 	}
 	
 	public function addLink()
 	{
 	 	/* Url registration */
-	 	if (!Db::getInstance()->Execute('INSERT INTO '._DB_PREFIX_.'blocklink VALUES (NULL, \''.pSQL($_POST['url']).'\', '.((isset($_POST['newWindow']) AND $_POST['newWindow']) == 'on' ? 1 : 0).')') OR !$lastId = mysql_insert_id())
-	 		return false;
+	 	if (!Db::getInstance()->Execute('INSERT INTO '._DB_PREFIX_.'blocksnipet VALUES (NULL, \''.pSQL($_POST['url']).'\', '.((isset($_POST['newWindow']) AND $_POST['newWindow']) == 'on' ? 1 : 0).')') OR !$lastId = mysql_insert_id())
+                        return false;
 	 	/* Multilingual text */
 	 	$languages = Language::getLanguages();
 	 	$defaultLanguage = (int)(Configuration::get('PS_LANG_DEFAULT'));
 	 	if (!$languages)
 	 		return false;
 	 	foreach ($languages AS $language)
-	 	 	if (!empty($_POST['text_'.$language['id_lang']]))
+	 	 	if (!empty($_POST['text_'.$language['id_lang']]) AND !empty($_POST['snipet_'.$language['id_lang']]))
 	 	 	{
-	 	 		if (!Db::getInstance()->Execute('INSERT INTO '._DB_PREFIX_.'blocklink_lang VALUES ('.(int)($lastId).', '.(int)($language['id_lang']).', \''.pSQL($_POST['text_'.$language['id_lang']]).'\')'))
-	 	 			return false;
+	 	 		if (!Db::getInstance()->Execute('INSERT INTO '._DB_PREFIX_.'blocksnipet_lang VALUES ('.(int)($lastId).', '.(int)($language['id_lang']).', \''.pSQL($_POST['text_'.$language['id_lang']]).'\', \''.pSQL($_POST['snipet_'.$language['id_lang']]).'\')'))
+                                        return false;
 	 	 	}
 	 	 	else
-	 	 		if (!Db::getInstance()->Execute('INSERT INTO '._DB_PREFIX_.'blocklink_lang VALUES ('.(int)($lastId).', '.(int)($language['id_lang']).', \''.pSQL($_POST['text_'.$defaultLanguage]).'\')'))
-	 	 			return false;
+	 	 		if (!Db::getInstance()->Execute('INSERT INTO '._DB_PREFIX_.'blocksnipet_lang VALUES ('.(int)($lastId).', '.(int)($language['id_lang']).', \''.pSQL($_POST['text_'.$defaultLanguage]).'\', \''.pSQL($_POST['snipet_'.$defaultLanguage]).'\')'))
+                                        return false;
 	 	return true;
 	}
 	
 	public function updateLink()
 	{
 	 	/* Url registration */
-	 	if (!Db::getInstance()->Execute('UPDATE '._DB_PREFIX_.'blocklink SET `url`=\''.pSQL($_POST['url']).'\', `new_window`='.(isset($_POST['newWindow']) ? 1 : 0).' WHERE `id_blocklink`='.(int)($_POST['id'])))
+	 	if (!Db::getInstance()->Execute('UPDATE '._DB_PREFIX_.'blocksnipet SET `url`=\''.pSQL($_POST['url']).'\', `new_window`='.(isset($_POST['newWindow']) ? 1 : 0).' WHERE `id_blocklink`='.(int)($_POST['id'])))
 	 		return false;
 	 	/* Multilingual text */
 	 	$languages = Language::getLanguages();
 	 	$defaultLanguage = (int)(Configuration::get('PS_LANG_DEFAULT'));
 	 	if (!$languages)
 			 return false;
-		if (!Db::getInstance()->Execute('DELETE FROM '._DB_PREFIX_.'blocklink_lang WHERE `id_blocklink` = '.(int)($_POST['id'])))
+		if (!Db::getInstance()->Execute('DELETE FROM '._DB_PREFIX_.'blocksnipet_lang WHERE `id_blocklink` = '.(int)($_POST['id'])))
 			return false ;
 	 	foreach ($languages AS $language)
 	 	 	if (!empty($_POST['text_'.$language['id_lang']]))
 	 	 	{
-	 	 		if (!Db::getInstance()->Execute('INSERT INTO '._DB_PREFIX_.'blocklink_lang VALUES ('.(int)($_POST['id']).', '.(int)($language['id_lang']).', \''.pSQL($_POST['text_'.$language['id_lang']]).'\')'))
+	 	 		if (!Db::getInstance()->Execute('INSERT INTO '._DB_PREFIX_.'blocksnipet_lang VALUES ('.(int)($_POST['id']).', '.(int)($language['id_lang']).', \''.pSQL($_POST['text_'.$language['id_lang']]).'\', \''.pSQL($_POST['snipet_'.$language['id_lang']]).'\')'))
 	 	 			return false;
 	 	 	}
 	 	 	else
-				if (!Db::getInstance()->Execute('INSERT INTO '._DB_PREFIX_.'blocklink_lang VALUES ('.(int)($_POST['id']).', '.$language['id_lang'].', \''.pSQL($_POST['text_'.$defaultLanguage]).'\')'))
+				if (!Db::getInstance()->Execute('INSERT INTO '._DB_PREFIX_.'blocksnipet_lang VALUES ('.(int)($_POST['id']).', '.$language['id_lang'].', \''.pSQL($_POST['text_'.$defaultLanguage]).'\', \''.pSQL($_POST['snipet_'.$defaultLanguage]).'\')'))
 	 	 			return false;
 	 	return true;
 	}
 	
 	public function deleteLink()
 	{
-	 	return (Db::getInstance()->Execute('DELETE FROM '._DB_PREFIX_.'blocklink WHERE `id_blocklink`='.(int)($_GET['id'])) AND Db::getInstance()->Execute('DELETE FROM '._DB_PREFIX_.'blocklink_lang WHERE `id_blocklink`='.(int)($_GET['id'])));
+	 	return (Db::getInstance()->Execute('DELETE FROM '._DB_PREFIX_.'blocksnipet WHERE `id_blocklink`='.(int)($_GET['id'])) AND Db::getInstance()->Execute('DELETE FROM '._DB_PREFIX_.'blocksnipet_lang WHERE `id_blocklink`='.(int)($_GET['id'])));
 	}
 	
 	public function updateTitle()
@@ -190,12 +197,12 @@ class BlockSnipet extends Module
 	public function getContent()
     {
      	$this->_html = '<h2>'.$this->displayName.'</h2>
-		<script type="text/javascript" src="'.$this->_path.'blocklink.js"></script>';
+		<script type="text/javascript" src="'.$this->_path.'blocksnipet.js"></script>';
 
      	/* Add a link */
      	if (isset($_POST['submitLinkAdd']))
      	{
-     	 	if (empty($_POST['text_'.Configuration::get('PS_LANG_DEFAULT')]) OR empty($_POST['url']))
+     	 	if (empty($_POST['text_'.Configuration::get('PS_LANG_DEFAULT')]) OR empty($_POST['url']) OR empty($_POST['snipet_'.Configuration::get('PS_LANG_DEFAULT')]))
      	 		$this->_html .= $this->displayError($this->l('You must fill in all fields'));
      	 	elseif (!Validate::isUrl(str_replace('http://', '', $_POST['url'])))
      	 			$this->_html .= $this->displayError($this->l('Bad URL'));
@@ -208,7 +215,7 @@ class BlockSnipet extends Module
      	/* Update a link */
      	elseif (isset($_POST['submitLinkUpdate']))
      	{
-     	 	if (empty($_POST['text_'.Configuration::get('PS_LANG_DEFAULT')]) OR empty($_POST['url']))
+     	 	if (empty($_POST['text_'.Configuration::get('PS_LANG_DEFAULT')]) OR empty($_POST['url']) OR empty($_POST['snipet_'.Configuration::get('PS_LANG_DEFAULT')]))
      	 		$this->_html .= $this->displayError($this->l('You must fill in all fields'));
      	 	elseif (!Validate::isUrl(str_replace('http://', '', $_POST['url'])))
      	 		$this->_html .= $this->displayError($this->l('Bad URL'));
@@ -260,7 +267,7 @@ class BlockSnipet extends Module
 	 	/* Language */
 	 	$defaultLanguage = (int)(Configuration::get('PS_LANG_DEFAULT'));
 		$languages = Language::getLanguages(false);
-		$divLangName = 'text¤title';
+		$divLangName = 'text¤snipet¤title';
 		/* Title */
 	 	$title_url = Configuration::get('PS_BLOCKSNIPET_URL');
 
@@ -270,7 +277,8 @@ class BlockSnipet extends Module
 		</script>
 	 	<fieldset>
 			<legend><img src="'.$this->_path.'add.png" alt="" title="" /> '.$this->l('Add a new link').'</legend>
-			<form method="post" action="'.$_SERVER['REQUEST_URI'].'">
+            <form method="post" action="'.$_SERVER['REQUEST_URI'].'">
+                <!-- text or title  -->
 				<label>'.$this->l('Text:').'</label>
 				<div class="margin-form">';
 			foreach ($languages as $language)
@@ -281,7 +289,21 @@ class BlockSnipet extends Module
 			$this->_html .= $this->displayFlags($languages, $defaultLanguage, $divLangName, 'text', true);
 			$this->_html .= '
 					<div class="clear"></div>
-				</div>
+                 </div> <!-- /.margin-form text -->';
+            $this->_html .= '
+                <!-- snipet or teaser -->
+                <label>'.$this->l('Snipet:').'</label>
+                <div class="margin-form">';
+            foreach ($languages as $language)
+                $this->_html .= '
+                    <div id="snipet_'.$language['id_lang'].'" style="display: '.($language['id_lang'] == $defaultLanguage ? 'block' : 'none').'; float: left;">
+                    <textarea rows="10" cols="30" name="snipet_'.$language['id_lang'].'" id="snipetInput_'.$language['id_lang'].'"/>'.(($this->error AND isset($_POST['snipet_'.$language['id_lang']])) ? $_POST['snipet_'.$language['id_lang']] : '').'</textarea><sup> *</sup>
+                    </div>';
+            $this->_html .= $this->displayFlags($languages, $defaultLanguage, $divLangName, 'snipet', true);
+            $this->_html .= '
+                    <div class="clear"></div>
+                </div> <!-- /.margin-form snipet -->';
+            $this->_html .= '
 				<label>'.$this->l('URL:').'</label>
 				<div class="margin-form"><input type="text" name="url" id="url" value="'.(($this->error AND isset($_POST['url'])) ? $_POST['url'] : '').'" /><sup> *</sup></div>
 				<label>'.$this->l('Open in a new window:').'</label>
@@ -344,8 +366,10 @@ class BlockSnipet extends Module
 	 		{
 	 			$this->_html .= 'links['.$link['id'].'] = new Array(\''.addslashes($link['url']).'\', '.$link['newWindow'];
 	 			foreach ($languages AS $language)
-					if (isset($link['text_'.$language['id_lang']]))
+					if (isset($link['text_'.$language['id_lang']])) {
 						$this->_html .= ', \''.addslashes($link['text_'.$language['id_lang']]).'\'';
+						$this->_html .= ', \''.addslashes($link['snipet_'.$language['id_lang']]).'\'';
+                                        }
 					else
 						$this->_html .= ', \'\'';
 	 			$this->_html .= ');';
@@ -359,9 +383,10 @@ class BlockSnipet extends Module
 				<th>'.$this->l('ID').'</th>
 				<th>'.$this->l('Text').'</th>
 				<th>'.$this->l('URL').'</th>
+				<th>'.$this->l('Snipet').'</th>
 				<th>'.$this->l('Actions').'</th>
 			</tr>';
-			
+		
 		if (!$links)
 			$this->_html .= '
 			<tr>
@@ -374,6 +399,7 @@ class BlockSnipet extends Module
 					<td>'.$link['id'].'</td>
 					<td>'.$link['text_'.$cookie->id_lang].'</td>
 					<td>'.$link['url'].'</td>
+					<td>'.$link['snipet_'.$cookie->id_lang].'</td>
 					<td>
 						<img src="../img/admin/edit.gif" alt="" title="" onclick="linkEdition('.$link['id'].')" style="cursor: pointer" />
 						<img src="../img/admin/delete.gif" alt="" title="" onclick="linkDeletion('.$link['id'].')" style="cursor: pointer" />

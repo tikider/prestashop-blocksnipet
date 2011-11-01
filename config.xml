@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <module>
-	<name>blocklink</name>
-	<displayName><![CDATA[Link block]]></displayName>
+	<name>blocksnipet</name>
+	<displayName><![CDATA[snipet block]]></displayName>
 	<version><![CDATA[1.4]]></version>
-	<description><![CDATA[Adds a block with additional links.]]></description>
-	<author><![CDATA[PrestaShop]]></author>
+	<description><![CDATA[Adds a block with additional links and snipets.]]></description>
+	<author><![CDATA[PrestaShop-dmbeti]]></author>
 	<tab><![CDATA[front_office_features]]></tab>
 	<confirmUninstall>Are you sure you want to delete all your links ?</confirmUninstall>
 	<is_configurable>1</is_configurable>
