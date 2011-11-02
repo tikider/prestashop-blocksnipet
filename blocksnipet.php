@@ -57,14 +57,15 @@ class BlockSnipet extends Module
 	 		`id_blocklink` int(2) NOT NULL AUTO_INCREMENT, 
 	 		`url` varchar(255) NOT NULL,
 	 		`new_window` TINYINT(1) NOT NULL,
+                        `image` varchar(100) NOT NULL,
 	 		PRIMARY KEY(`id_blocklink`))
 	 		ENGINE='._MYSQL_ENGINE_.' default CHARSET=utf8') OR
 	 		!Db::getInstance()->Execute('
 	 		CREATE TABLE '._DB_PREFIX_.'blocksnipet_lang (
 	 		`id_blocklink` int(2) NOT NULL,
 	 		`id_lang` int(2) NOT NULL,
-            `text` varchar(64) NOT NULL,
-            `snipet` varchar(500) NOT NULL,
+                        `text` varchar(64) NOT NULL,
+                        `snipet` varchar(500) NOT NULL,
 	 		PRIMARY KEY(`id_blocklink`, `id_lang`))
 	 		ENGINE='._MYSQL_ENGINE_.' default CHARSET=utf8') OR
 		 	!Configuration::updateValue('PS_BLOCKSNIPET_TITLE', array('1' => 'Block link', '2' => 'Bloc lien')))
@@ -90,6 +91,7 @@ class BlockSnipet extends Module
 		
 		$smarty->assign(array(
 			'blocklink_links' => $links,
+                        'imagedir' => $this->_path.'images/',
 			'title' => Configuration::get('PS_BLOCKSNIPET_TITLE', $cookie->id_lang),
 			'url' => Configuration::get('PS_BLOCKSNIPET_URL'),
 			'lang' => 'text_'.$cookie->id_lang,
@@ -109,7 +111,7 @@ class BlockSnipet extends Module
 	{
 	 	$result = array();
 	 	/* Get id and url */
-	 	if (!$links = Db::getInstance()->ExecuteS('SELECT `id_blocklink`, `url`, `new_window` FROM '._DB_PREFIX_.'blocksnipet'.((int)(Configuration::get('PS_BLOCKSNIPET_ORDERWAY')) == 1 ? ' ORDER BY `id_blocklink` DESC' : ''))) 
+	 	if (!$links = Db::getInstance()->ExecuteS('SELECT `id_blocklink`, `url`, `new_window`, `image` FROM '._DB_PREFIX_.'blocksnipet'.((int)(Configuration::get('PS_BLOCKSNIPET_ORDERWAY')) == 1 ? ' ORDER BY `id_blocklink` DESC' : '')))
                         return false;
 	 	$i = 0;
 	 	foreach ($links AS $link)
@@ -117,6 +119,7 @@ class BlockSnipet extends Module
 		 	$result[$i]['id'] = $link['id_blocklink'];
 			$result[$i]['url'] = $link['url'];
 			$result[$i]['newWindow'] = $link['new_window'];
+                        $result[$i]['image'] = $link['image'];
 			/* Get multilingual text */
 			if (!$texts = Db::getInstance()->ExecuteS('SELECT `id_lang`, `text`, `snipet` FROM '._DB_PREFIX_.'blocksnipet_lang WHERE `id_blocklink`='.(int)($link['id_blocklink'])))
                                 return false;
@@ -135,7 +138,11 @@ class BlockSnipet extends Module
 	public function addLink()
 	{
 	 	/* Url registration */
-	 	if (!Db::getInstance()->Execute('INSERT INTO '._DB_PREFIX_.'blocksnipet VALUES (NULL, \''.pSQL($_POST['url']).'\', '.((isset($_POST['newWindow']) AND $_POST['newWindow']) == 'on' ? 1 : 0).')') OR !$lastId = mysql_insert_id())
+                /*TODO test for errors while uploading*/
+	 	if (!Db::getInstance()->Execute('INSERT INTO '._DB_PREFIX_.'blocksnipet VALUES (NULL, \''.pSQL($_POST['url']).'\', '.((isset($_POST['newWindow']) AND $_POST['newWindow']) == 'on' ? 1 : 0).',\''.$_FILES['image']['name'].'\')') OR !$lastId = mysql_insert_id())
+                        return false;
+                /* Register the image in ./images */
+                if (!move_uploaded_file($_FILES['image']['tmp_name'], dirname(__FILE__).'/images/'.$_FILES['image']['name']))
                         return false;
 	 	/* Multilingual text */
 	 	$languages = Language::getLanguages();
@@ -157,8 +164,17 @@ class BlockSnipet extends Module
 	public function updateLink()
 	{
 	 	/* Url registration */
-	 	if (!Db::getInstance()->Execute('UPDATE '._DB_PREFIX_.'blocksnipet SET `url`=\''.pSQL($_POST['url']).'\', `new_window`='.(isset($_POST['newWindow']) ? 1 : 0).' WHERE `id_blocklink`='.(int)($_POST['id'])))
-	 		return false;
+                if (isset($_FILES['image']) AND isset($_FILES['image']['tmp_name']) AND !empty($_FILES['image']['tmp_name'])) {
+                        /* Register the image in ./images */
+                        if (!move_uploaded_file($_FILES['image']['tmp_name'], dirname(__FILE__).'/images/'.$_FILES['image']['name']))
+                                return false;
+
+                        if (!Db::getInstance()->Execute('UPDATE '._DB_PREFIX_.'blocksnipet SET `url`=\''.pSQL($_POST['url']).'\', `new_window`='.(isset($_POST['newWindow']) ? 1 : 0).', `image`=\''.$_FILES['image']['name'].'\' WHERE `id_blocklink`='.(int)($_POST['id'])))
+                                return false;
+                } else {
+                        if (!Db::getInstance()->Execute('UPDATE '._DB_PREFIX_.'blocklink SET `url`=\''.pSQL($_POST['url']).'\', `new_window`='.(isset($_POST['newWindow']) ? 1 : 0).' WHERE `id_blocklink`='.(int)($_POST['id'])))
+                                return false;
+                }
 	 	/* Multilingual text */
 	 	$languages = Language::getLanguages();
 	 	$defaultLanguage = (int)(Configuration::get('PS_LANG_DEFAULT'));
@@ -277,7 +293,7 @@ class BlockSnipet extends Module
 		</script>
 	 	<fieldset>
 			<legend><img src="'.$this->_path.'add.png" alt="" title="" /> '.$this->l('Add a new link').'</legend>
-            <form method="post" action="'.$_SERVER['REQUEST_URI'].'">
+            <form method="post" action="'.$_SERVER['REQUEST_URI'].'" enctype="multipart/form-data">
                 <!-- text or title  -->
 				<label>'.$this->l('Text:').'</label>
 				<div class="margin-form">';
@@ -291,6 +307,14 @@ class BlockSnipet extends Module
 					<div class="clear"></div>
                  </div> <!-- /.margin-form text -->';
             $this->_html .= '
+
+                <label>'.$this->l('Image:').'</label>
+		<div class="margin-form">
+                        <img src="" id="image" alt="" title="" style="height:50px ; width:70px ;" /><br />
+                        <input type="file" name="image"/><sup> *</sup>
+                </div>
+
+
                 <!-- snipet or teaser -->
                 <label>'.$this->l('Snipet:').'</label>
                 <div class="margin-form">';
@@ -364,7 +388,7 @@ class BlockSnipet extends Module
 				var links = new Array();';
 	 		foreach ($links AS $link)
 	 		{
-	 			$this->_html .= 'links['.$link['id'].'] = new Array(\''.addslashes($link['url']).'\', '.$link['newWindow'];
+	 			$this->_html .= 'links['.$link['id'].'] = new Array(\''.addslashes($link['url']).'\', '.$link['newWindow'].',\''.addslashes($this->_path.'images/'.$link['image']).'\'';
 	 			foreach ($languages AS $language)
 					if (isset($link['text_'.$language['id_lang']])) {
 						$this->_html .= ', \''.addslashes($link['text_'.$language['id_lang']]).'\'';
@@ -384,6 +408,7 @@ class BlockSnipet extends Module
 				<th>'.$this->l('Text').'</th>
 				<th>'.$this->l('URL').'</th>
 				<th>'.$this->l('Snipet').'</th>
+                                <th>'.$this->l('Image').'</th>
 				<th>'.$this->l('Actions').'</th>
 			</tr>';
 		
@@ -400,6 +425,9 @@ class BlockSnipet extends Module
 					<td>'.$link['text_'.$cookie->id_lang].'</td>
 					<td>'.$link['url'].'</td>
 					<td>'.$link['snipet_'.$cookie->id_lang].'</td>
+                                        <td>
+                                                <img src="'.$this->_path.'images/'.$link['image'].'" alt="" title="" style="height:40px;width:50px;" />
+                                        </td>
 					<td>
 						<img src="../img/admin/edit.gif" alt="" title="" onclick="linkEdition('.$link['id'].')" style="cursor: pointer" />
 						<img src="../img/admin/delete.gif" alt="" title="" onclick="linkDeletion('.$link['id'].')" style="cursor: pointer" />

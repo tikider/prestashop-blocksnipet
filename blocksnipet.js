@@ -29,10 +29,11 @@ function linkEdition(linkId)
  	getE('id').value = linkId;
  	getE('url').value = links[linkId][0];
  	getE('newWindow').checked = links[linkId][1];
+        getE('image').src = links[linkId][2];
 	var beg = parseInt(getE('languageFirst').value);
  	for (var i = 0; i <= parseInt(getE('languageNb').value - 1); i++){
- 		getE('textInput_'+ (beg + i)).value = links[linkId][i*2 + 2];
-             	getE('snipetInput_'+ (beg + i)).value = links[linkId][i*2 + 3];
+ 		getE('textInput_'+ (beg + i)).value = links[linkId][i*2 + 3];
+             	getE('snipetInput_'+ (beg + i)).value = links[linkId][i*2 + 4];
         }
  	getE('submitLinkUpdate').disabled = '';
  	getE('submitLinkUpdate').setAttribute('class', 'button');

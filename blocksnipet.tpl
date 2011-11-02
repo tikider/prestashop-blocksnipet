@@ -35,7 +35,11 @@
 	</h4>
 	<ul class="block_content bullet">
 	{foreach from=$blocklink_links item=blocklink_link}
-		<li><a href="{$blocklink_link.url|htmlentities}"{if $blocklink_link.newWindow} onclick="window.open(this.href);return false;"{/if}>{$blocklink_link.$lang}</a><p>{$blocklink_link.$snip}</p></li>
+		<li>
+                        <a href="{$blocklink_link.url|htmlentities}"{if $blocklink_link.newWindow} onclick="window.open(this.href);return false;"{/if}>{$blocklink_link.$lang}</a>
+                        <img src="{$imagedir}{$blocklink_link.image}" alt="" title="" />
+                        <p>{$blocklink_link.$snip}</p>
+                </li>
 	{/foreach}
 	</ul>
 </div>
