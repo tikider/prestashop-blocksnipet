@@ -25,7 +25,7 @@
 *}
 
 <!-- Block links module -->
-<div id="links_block_left" class="block">
+<div id="snipets_block" style="margin=top:10px;">
 	<h4>
 	{if $url}
 		<a href="{$url}">{$title}</a>
@@ -33,14 +33,31 @@
 		{$title}
 	{/if}
 	</h4>
-	<ul class="block_content bullet">
-	{foreach from=$blocklink_links item=blocklink_link}
-		<li>
+            {if $arrange == 1}
+                {foreach from=$blocklink_links item=blocklink_link}
+               
+                    <div style="width:100%;padding-bottom:10px;border-bottom:1px solid #aaa;">
+                        <h5><a href="{$blocklink_link.url|htmlentities}"{if $blocklink_link.newWindow} onclick="window.open(this.href);return false;"{/if}>{$blocklink_link.$lang}</a></h5>
+                        <p>
+                        <img src="{$imagedir}{$blocklink_link.image}" alt="" title="" style="float:left;"/>
+                        {$blocklink_link.$snip}</p>
+                        <div class="flatclear">&nbsp;</div>
+                    </div>
+                    
+                {/foreach}
+
+            {else}
+                <ul class="block_content" >
+                {foreach from=$blocklink_links item=blocklink_link}
+                    <li>
                         <a href="{$blocklink_link.url|htmlentities}"{if $blocklink_link.newWindow} onclick="window.open(this.href);return false;"{/if}>{$blocklink_link.$lang}</a>
                         <img src="{$imagedir}{$blocklink_link.image}" alt="" title="" />
                         <p>{$blocklink_link.$snip}</p>
-                </li>
-	{/foreach}
-	</ul>
+                    </li>
+                {/foreach}
+                </ul>
+            {/if}
+            <div class="flatclear">&nbsp;</div>
+	
 </div>
 <!-- /Block links module -->
