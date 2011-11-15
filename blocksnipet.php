@@ -94,6 +94,7 @@ class BlockSnipet extends Module
                         'imagedir' => $this->_path.'images/',
 			'title' => Configuration::get('PS_BLOCKSNIPET_TITLE', $cookie->id_lang),
 			'url' => Configuration::get('PS_BLOCKSNIPET_URL'),
+                        'arrange' => Configuration::get('PS_BLOCKSNIPET_ARRANGE'),
 			'lang' => 'text_'.$cookie->id_lang,
                         'snip' => 'snipet_'.$cookie->id_lang
 		));
@@ -273,8 +274,9 @@ class BlockSnipet extends Module
      	}
      	if (isset($_POST['submitOrderWay']))
 		{
-			if (Configuration::updateValue('PS_BLOCKSNIPET_ORDERWAY', (int)(Tools::getValue('orderWay'))))
-				$this->_html .= $this->displayConfirmation($this->l('Sort order updated'));
+			if (Configuration::updateValue('PS_BLOCKSNIPET_ORDERWAY', (int)(Tools::getValue('orderWay')))
+                                AND Configuration::updateValue('PS_BLOCKSNIPET_ARRANGE', (int)(Tools::getValue('arrange'))))
+				$this->_html .= $this->displayConfirmation($this->l('Sort order & item arrangement updated'));
 			else
 				$this->_html .= $this->displayError($this->l('An error occurred during sort order set-up.'));
 		}
@@ -376,6 +378,11 @@ class BlockSnipet extends Module
 						<option value="1"'.(Configuration::get('PS_BLOCKSNIPET_ORDERWAY') ? 'selected="selected"' : '').'>'.$this->l('by oldest links').'</option>
 					</select>
 				</div>
+                                <label>'.$this->l('Arrange snipet fields horizontally:').'</label>
+                                <div class="margin-form">
+                                    <input type="radio" name="arrange" value="1" '.(Configuration::get('PS_BLOCKSNIPET_ARRANGE') ? 'checked="checked"' : '').'/> '.$this->l('Yes').'
+                                    <input type="radio" name="arrange" value="0" '.(!Configuration::get('PS_BLOCKSNIPET_ARRANGE') ? 'checked="checked"' : '').'/> '.$this->l('No').'
+                                </div>
 				<div class="margin-form"><input type="submit" class="button" name="submitOrderWay" value="'.$this->l('Update').'" /></div>
 			</form>
 		</fieldset>';
