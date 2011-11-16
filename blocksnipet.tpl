@@ -25,7 +25,7 @@
 *}
 
 <!-- Block links module -->
-<div id="snipets_block" style="margin=top:10px;">
+<div id="snipets_block" style="margin-top:10px; margin-bottom:10px;">
 	<h4>
 	{if $url}
 		<a href="{$url}">{$title}</a>
