@@ -122,12 +122,20 @@ class BlockSnipet extends Module
 		
 		$smarty->assign(array(
 			'blocklink_links' => $links,
-                        'imagedir' => $this->_path.'images/',
-			'title' => Configuration::get('PS_BLOCKSNIPET_TITLE', $cookie->id_lang),
-			'url' => Configuration::get('PS_BLOCKSNIPET_URL'),
-                        'arrange' => Configuration::get('PS_BLOCKSNIPET_ARRANGE'),
-			'lang' => 'text_'.$cookie->id_lang,
-                        'snip' => 'snipet_'.$cookie->id_lang
+                        'imagedir'        => $this->_path.'images/',
+                        'jsdir'           => $this->_path.'js/',
+                        'cssdir'          => $this->_path.'css/',
+			'title'           => Configuration::get('PS_BLOCKSNIPET_TITLE', $cookie->id_lang),
+			'url'             => Configuration::get('PS_BLOCKSNIPET_URL'),
+                        'arrange'         => Configuration::get('PS_BLOCKSNIPET_ARRANGE'),
+                        'slide'           => Configuration::get('PS_BLOCKSNIPET_SLIDE'),
+			'lang'            => 'text_'.$cookie->id_lang,
+                        'snip'            => 'snipet_'.$cookie->id_lang,
+                        'fx'              => 'fade',
+                        'speed'           => '',
+                        'height'          => '',
+                        'width'           => '',
+                        'timeout'         => ''
 		));
 	 	if (!$links)
 			return false;
@@ -284,9 +292,10 @@ class BlockSnipet extends Module
      	/* Update the block title */
      	elseif (isset($_POST['submitTitle']))
      	{
-     	 	if (empty($_POST['title_'.Configuration::get('PS_LANG_DEFAULT')]))
-     	 		$this->_html .= $this->displayError($this->l('"title" field cannot be empty.'));
-     	 	elseif (!empty($_POST['title_url']) AND !Validate::isUrl(str_replace('http://', '', $_POST['title_url'])))
+     	 	//here we hack this to avoid error when block title emplty with slide
+                /*if (empty($_POST['title_'.Configuration::get('PS_LANG_DEFAULT')]))
+     	 		$this->_html .= $this->displayError($this->l('"title" field cannot be empty.'));*/
+     	 	if (!empty($_POST['title_url']) AND !Validate::isUrl(str_replace('http://', '', $_POST['title_url'])))
      	 		$this->_html .= $this->displayError($this->l('The \'title\' field is invalid'));
      	 	elseif (!Validate::isGenericName($_POST['title_'.Configuration::get('PS_LANG_DEFAULT')]))
      	 		$this->_html .= $this->displayError($this->l('The \'title\' field is invalid'));
@@ -306,7 +315,8 @@ class BlockSnipet extends Module
      	if (isset($_POST['submitOrderWay']))
 		{
 			if (Configuration::updateValue('PS_BLOCKSNIPET_ORDERWAY', (int)(Tools::getValue('orderWay')))
-                                AND Configuration::updateValue('PS_BLOCKSNIPET_ARRANGE', (int)(Tools::getValue('arrange'))))
+                                AND Configuration::updateValue('PS_BLOCKSNIPET_ARRANGE', (int)(Tools::getValue('arrange')))
+                                AND Configuration::updateValue('PS_BLOCKSNIPET_SLIDE', (int)(Tools::getValue('slide'))))
 				$this->_html .= $this->displayConfirmation($this->l('Sort order & item arrangement updated'));
 			else
 				$this->_html .= $this->displayError($this->l('An error occurred during sort order set-up.'));
@@ -409,11 +419,18 @@ class BlockSnipet extends Module
 						<option value="1"'.(Configuration::get('PS_BLOCKSNIPET_ORDERWAY') ? 'selected="selected"' : '').'>'.$this->l('by oldest links').'</option>
 					</select>
 				</div>
-                                <label>'.$this->l('Arrange snipet fields horizontally:').'</label>
+                                <label>'.$this->l('Display text next to image:').'</label>
                                 <div class="margin-form">
                                     <input type="radio" name="arrange" value="1" '.(Configuration::get('PS_BLOCKSNIPET_ARRANGE') ? 'checked="checked"' : '').'/> '.$this->l('Yes').'
                                     <input type="radio" name="arrange" value="0" '.(!Configuration::get('PS_BLOCKSNIPET_ARRANGE') ? 'checked="checked"' : '').'/> '.$this->l('No').'
                                 </div>
+
+                                <label>'.$this->l('Display as a Slide:').'</label>
+                                <div class="margin-form">
+                                    <input type="radio" name="slide" value="1" '.(Configuration::get('PS_BLOCKSNIPET_SLIDE') ? 'checked="checked"' : '').'/> '.$this->l('Yes').'
+                                    <input type="radio" name="slide" value="0" '.(!Configuration::get('PS_BLOCKSNIPET_SLIDE') ? 'checked="checked"' : '').'/> '.$this->l('No').'
+                                </div>
+
 				<div class="margin-form"><input type="submit" class="button" name="submitOrderWay" value="'.$this->l('Update').'" /></div>
 			</form>
 		</fieldset>';

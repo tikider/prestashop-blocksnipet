@@ -25,7 +25,19 @@
 *}
 
 <!-- Block links module -->
-<div id="snipets_block" style="margin-top:10px; margin-bottom:10px;">
+{if $slide eq 1}
+    <script type="text/javascript" src="{$jsdir}jquery.cycle.all.js"></script>
+    <link href="{$cssdir}style.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript">
+   	$(document).ready(function(){ldelim}
+            $('#snip_content').cycle({ldelim}
+                fx: '{$fx}',
+                pager: '#snipnav',
+		{rdelim});
+        {rdelim});
+     </script>
+{/if}
+<div id="snipets_block" style="position:relative;margin-top:10px; margin-bottom:10px;">
 	<h4>
 	{if $url}
 		<a href="{$url}">{$title}</a>
@@ -33,9 +45,10 @@
 		{$title}
 	{/if}
 	</h4>
-            {if $arrange == 1}
+            {if $arrange == 1 AND $slide != 1}
+                <div>
                 {foreach from=$blocklink_links item=blocklink_link}
-               
+                    
                     <div style="width:100%;padding-bottom:10px;border-bottom:1px solid #aaa;">
                         <h5><a href="{$blocklink_link.url|htmlentities}"{if $blocklink_link.newWindow} onclick="window.open(this.href);return false;"{/if}>{$blocklink_link.$lang}</a></h5>
                         <p>
@@ -45,8 +58,9 @@
                     </div>
                     
                 {/foreach}
-
-            {else}
+                </div>
+            {/if}
+            {if $arrange != 1 AND $slide != 1}
                 <ul class="block_content" >
                 {foreach from=$blocklink_links item=blocklink_link}
                     <li>
@@ -56,6 +70,24 @@
                     </li>
                 {/foreach}
                 </ul>
+            {/if}
+            {if $slide == 1}
+            <div id="snip_content">
+                 {foreach from=$blocklink_links item=blocklink_link}
+
+                    <div style="width:635px;height:420px;position:relative;">
+
+                        <img src="{$imagedir}{$blocklink_link.image}" alt="" title="" style="position:absolute;"/>
+                        <div class="snip-caption" >
+                            <h5><a href="{$blocklink_link.url|htmlentities}"{if $blocklink_link.newWindow} onclick="window.open(this.href);return false;"{/if}>{$blocklink_link.$lang}</a></h5>
+                            {$blocklink_link.$snip}
+                        </div>
+                        <div class="flatclear">&nbsp;</div>
+                    </div>
+
+                {/foreach}
+            </div>
+            <div id="snipnav"></div>
             {/if}
             <div class="flatclear">&nbsp;</div>
 	
